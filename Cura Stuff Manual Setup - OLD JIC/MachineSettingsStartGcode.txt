@@ -1,0 +1,42 @@
+M201 X500.00 Y500.00 Z100.00 E5000.00 ;Setup machine max acceleration
+M203 X500.00 Y500.00 Z10.00 E50.00 ;Setup machine max feedrate
+M204 P500.00 R1000.00 T500.00 ;Setup Print/Retract/Travel acceleration
+M205 X8.00 Y8.00 Z0.40 E5.00 ;Setup Jerk
+M220 S100 ;Reset Feedrate
+M221 S100 ;Reset Flowrate
+
+;---- MY OVERRIDES ----
+;CONSIDER top of file as line 11ish, after the comments
+;SEMICOLON is the comment character, make sure to uncomment when appropriate
+
+;M501 ;paste at top to load eeprom values just in case
+
+;M851 Z-2.4 ;For extra squish, uncomment
+G28 ;Home
+
+;To simply load last bed mesh, uncomment next command,
+;and comment out next 4 lines. But really not worth time saving
+;M420 S1
+M117 Delay glass heating
+G4 S120
+@BEDLEVELVISUALIZER
+G29 T ;DO NOT save (M500) just in case other random custom overrides are in RAM
+
+;Paste at top of file for 250Cish ABS ASA Nozzle
+;M301 E0 P41.72 I4.11 D105.97
+
+;For 117.5 bed for 100 (paste at top)
+;M301 E-1 P35.62 I4.24 D199.47
+;For 97.5 bed for 80 actual: 
+;M301 E-1 P38.41 I4.85 D202.82
+
+;-------- end --------
+
+G92 E0 ;Reset Extruder
+G1 Z2.0 F3000 ;Move Z Axis up
+G1 X10.1 Y20 Z0.28 F5000.0 ;Move to start position
+G1 X10.1 Y200.0 Z0.28 F1500.0 E15 ;Draw the first line
+G1 X10.4 Y200.0 Z0.28 F5000.0 ;Move to side a little
+G1 X10.4 Y20 Z0.28 F1500.0 E30 ;Draw the second line
+G92 E0 ;Reset Extruder
+G1 Z2.0 F3000 ;Move Z Axis up
