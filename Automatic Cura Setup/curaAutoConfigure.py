@@ -3,6 +3,9 @@ import subprocess
 import shutil
 import platform
 import time
+import urllib.request
+
+BASE_URL = "https://github.com/Ultimaker/Cura/releases/download/5.9.0"
 
 def find_cura_path():
     system = platform.system()
@@ -34,14 +37,31 @@ def uninstall_cura(cura_path):
         if os.path.exists(cura_path):
             subprocess.run(["rm", "-rf", cura_path], check=True)
 
+def download_cura_installer(system):
+    print("Downloading Cura installer...")
+    if system == "Windows":
+        installer_name = "UltiMaker-Cura-5.9.0-win64-X64.exe"
+    elif system == "Darwin":
+        arch = subprocess.check_output(["uname", "-m"]).strip().decode()
+        if arch == "arm64":
+            installer_name = "UltiMaker-Cura-5.9.0-macos-ARM64.dmg"
+        else:
+            installer_name = "UltiMaker-Cura-5.9.0-macos-X64.dmg"
+    else:
+        print("Unsupported operating system.")
+        exit(1)
+
+    url = f"{BASE_URL}/{installer_name}"
+    installer_path = os.path.join(os.path.expanduser('~'), 'Downloads', installer_name)
+    urllib.request.urlretrieve(url, installer_path)
+    print("Download completed.")
+    return installer_path
+
 def install_cura(system):
     print("Installing Cura...")
+    installer_path = download_cura_installer(system)
+
     if system == "Windows":
-        installer_name = "Ultimaker-Cura-5.9.0-win64-X64.exe"
-        installer_path = os.path.join(os.getcwd(), installer_name)
-        if not os.path.exists(installer_path):
-            print(f"Installer {installer_name} not found in the current directory.")
-            exit(1)
         result = subprocess.run([installer_path, "/S"], shell=True)  # Silent install
         if result.returncode != 0:
             print("Installation failed.")
@@ -56,12 +76,6 @@ def install_cura(system):
         return cura_path
 
     elif system == "Darwin":  # macOS
-        arch = subprocess.check_output(["uname", "-m"]).strip().decode()
-        installer_name = "Ultimaker-Cura-5.9.0-macos-ARM64.dmg" if arch == "arm64" else "Ultimaker-Cura-5.9.0-macos-X64.dmg"
-        installer_path = os.path.join(os.getcwd(), installer_name)
-        if not os.path.exists(installer_path):
-            print(f"Installer {installer_name} not found in the current directory.")
-            exit(1)
         subprocess.run(["hdiutil", "attach", installer_path], check=True)
         subprocess.run(["cp", "-r", "/Volumes/Ultimaker Cura/Ultimaker Cura.app", "/Applications"], check=True)
         subprocess.run(["hdiutil", "detach", "/Volumes/Ultimaker Cura"], check=True)
@@ -91,7 +105,6 @@ def clean_old_versions():
         shutil.rmtree(local_appdata_path)
 
 def open_cura(cura_path):
-    
     system = platform.system()
     if system == "Windows":
         cura_exe_path = os.path.join(cura_path, "UltiMaker-Cura.exe")
@@ -138,18 +151,18 @@ def upgrade_cura_windows():
     print("Upgrading Cura using winget...")
     result = subprocess.run(["winget", "upgrade", "--id", "Ultimaker.Cura", "--silent"], shell=True)
     if result.returncode != 0:
-        print("Upgrade failed.")
+        print("Upgrade failed. (Or up to date)")
         exit(1)
 
 if __name__ == "__main__":
-    print("WARNING: This script will remove all of your Cura metadata and replace it with the defaults and the SEP environment. Do you want to continue? (y/n)")
+    print("\n\nWARNING: This script will remove all of your Cura metadata and replace it with the defaults and the SEP environment. Do you want to continue? (y/n)")
     choice = input().strip().lower()
     if choice != 'y':
         print("Aborting script.")
         exit(0)
 
     print("Accept all OS dialogs. Then, this script will open Cura three times. First time you will need to add a random offline printer, and get through the welcome dialogs. Do not upgrade Cura if asked. Then exit Cura to continue. The following times, select 'Import as project' when the dialog asks if you would like to import all settings and models from the project file, then close Cura.")
-    input("Press any key to continue...")
+    input("\nPress any key to continue...\n")
 
     first_file = "AquilaEmptyProjectToImportPrinterAndProfile.3mf"
     second_file = "Cr10EmptyProjectToImportPrinterAndProfile.3mf"
